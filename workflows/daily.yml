@@ -1,0 +1,24 @@
+name: nasdaq-alert
+on:
+  schedule: [{ cron: "15 21 * * 1-5" }]  # 21:15 UTC ≈ 4:15pm ET (after US close)
+  workflow_dispatch: {}
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install yfinance pandas
+      - env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          TO_EMAIL:  ${{ secrets.TO_EMAIL }}
+        run: python nasdaq_alert.py
+      - name: Publish dashboard
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
