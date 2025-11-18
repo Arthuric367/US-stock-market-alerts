@@ -1,24 +1,41 @@
 name: nasdaq-alert
+
 on:
-  schedule: [{ cron: "15 21 * * 1-5" }]  # 21:15 UTC ≈ 4:15pm ET (after US close)
-  workflow_dispatch: {}
-jobs:
-  run:
+  run:  schedule:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.11" }
-      - run: pip install yfinance pandas
-      - env:
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install yfinance
+
+      - name: Run alert script
+        env:
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           TO_EMAIL:  ${{ secrets.TO_EMAIL }}
         run: python nasdaq_alert.py
-      - name: Publish dashboard
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
+
+      # If your repo is set to serve Pages from /docs on the default branch,
+      # you don't need to publish anything extra — the updated docs/ will be in the workflow's workspace but not committed.
+      # If you want the file to persist to the branch, add a commit step:
+      - name: Commit updated dashboard
+        run: |
+          if [ -n "$(git status --porcelain docs/)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add docs/
+            git commit -m "Update dashboard [skip ci]"
+            git push
+          fi
+    - cron: "15 21 * * 1-5"   # 21:15 UTC on weekdays (≈ 4:15pm ET after US close)
+  workflow_dispatch: {}        # allow manual runs
+
+jobs:
