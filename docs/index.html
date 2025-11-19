@@ -1,18 +1,46 @@
 <!doctype html><html><head><meta charset="utf-8">
-<title>Nasdaq Drawdown</title>
+<title>Multi-Asset Drawdown Dashboard</title>
 <style>
-body { font-family: system-ui, Segoe UI, Arial, sans-serif; max-width: 800px; margin: 40px auto }
-ul { line-height: 1.7 }
+body { font-family: system-ui, Segoe UI, Arial, sans-serif; max-width: 900px; margin: 32px auto }
+h1 { margin-bottom: 8px }
+small { color:#666 }
+hr { border:none; border-top:1px solid #eee; margin: 24px 0 }
 </style>
 </head><body>
-<h1>Nasdaq Composite (IXIC) – Drawdown Dashboard</h1>
-<p>Last close: <b>22,432.85</b><br>
-ATH close: <b>23,958.47</b><br>
-Drawdown: <b>-6.37%</b><br>
-Updated: 2025-11-19 04:20 UTC</p>
-<h3>Thresholds</h3>
-<ul>
-<li>15%: 20,364.70 – <b style='color:#2a7'>not triggered</b></li><li>19%: 19,166.78 – <b style='color:#2a7'>not triggered</b></li><li>25%: 17,968.85 – <b style='color:#2a7'>not triggered</b></li><li>30%: 16,770.93 – <b style='color:#2a7'>not triggered</b></li>
-</ul>
-<p>Data source: Yahoo Finance (^IXIC daily close).</p>
+<h1>US Market Drawdown Dashboard <small>(updated 2025-11-19 06:07 UTC)</small></h1>
+
+<section style="margin-bottom:24px">
+  <h2 style="margin:6px 0">Nasdaq Composite (IXIC) — ^IXIC</h2>
+  <div>Last close: <b>22,432.85</b> &nbsp;|&nbsp; ATH close: <b>23,958.47</b> &nbsp;|&nbsp; Drawdown: <b>-6.37%</b></div>
+  <ul style="line-height:1.7;margin-top:8px">
+    <li>-15%: 20,364.70 – <b style='color:#2a7'>not triggered</b></li><li>-19%: 19,166.78 – <b style='color:#2a7'>not triggered</b></li><li>-25%: 17,968.85 – <b style='color:#2a7'>not triggered</b></li><li>-30%: 16,770.93 – <b style='color:#2a7'>not triggered</b></li>
+  </ul>
+</section>
+
+<section style="margin-bottom:24px">
+  <h2 style="margin:6px 0">S&P 500 (SPX) — ^GSPC</h2>
+  <div>Last close: <b>6,617.32</b> &nbsp;|&nbsp; ATH close: <b>6,890.89</b> &nbsp;|&nbsp; Drawdown: <b>-3.97%</b></div>
+  <ul style="line-height:1.7;margin-top:8px">
+    <li>-15%: 5,857.26 – <b style='color:#2a7'>not triggered</b></li><li>-19%: 5,512.71 – <b style='color:#2a7'>not triggered</b></li><li>-25%: 5,168.17 – <b style='color:#2a7'>not triggered</b></li><li>-30%: 4,823.62 – <b style='color:#2a7'>not triggered</b></li>
+  </ul>
+</section>
+
+<section style="margin-bottom:24px">
+  <h2 style="margin:6px 0">Tesla, Inc. (TSLA) — TSLA</h2>
+  <div>Last close: <b>401.25</b> &nbsp;|&nbsp; ATH close: <b>479.86</b> &nbsp;|&nbsp; Drawdown: <b>-16.38%</b></div>
+  <ul style="line-height:1.7;margin-top:8px">
+    <li>-15%: 407.88 – <b style='color:#c33'>TRIGGERED</b></li><li>-19%: 383.89 – <b style='color:#2a7'>not triggered</b></li><li>-25%: 359.89 – <b style='color:#2a7'>not triggered</b></li><li>-30%: 335.90 – <b style='color:#2a7'>not triggered</b></li>
+  </ul>
+</section>
+
+<section style="margin-bottom:24px">
+  <h2 style="margin:6px 0">Tesla, Inc. (TSLA) — ONDS</h2>
+  <div>Last close: <b>7.84</b> &nbsp;|&nbsp; ATH close: <b>15.40</b> &nbsp;|&nbsp; Drawdown: <b>-49.09%</b></div>
+  <ul style="line-height:1.7;margin-top:8px">
+    <li>-30%: 10.78 – <b style='color:#c33'>TRIGGERED</b></li>
+  </ul>
+</section>
+
+<hr>
+<p>Data source: Yahoo Finance (daily close). Thresholds are calculated from all-time closing highs.</p>
 </body></html>
