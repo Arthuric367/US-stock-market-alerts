@@ -3,7 +3,7 @@ import json
 import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime, timezone
- yfinance as yf
+yfinance as yf
 
 TICKER = "^IXIC"
 THRESHOLDS = [0.85, 0.80, 0.75, 0.70]  # -15%, -20%, -25%, -30%
