@@ -1,4 +1,5 @@
-name: nasdaq-alert
+# .github/workflows/daily.yml
+name: nasdaq-alert-daily
 
 on:
   run:  schedule:
