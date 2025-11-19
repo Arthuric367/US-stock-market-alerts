@@ -2,10 +2,23 @@
 name: nasdaq-alert-daily
 
 on:
-  run:  schedule:
+  schedule:
+    - cron: "15 21 * * 1-5"    # Weekdays at 21:15 UTC ≈ 4:15pm ET (after US market close)
+  workflow_dispatch: {}         # Allow manual runs from the Actions tab
+
+permissions:
+  contents: write               # Needed to commit docs/ back to the repository
+
+jobs:
+  run:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true   # Keep GITHUB_TOKEN for git push
+          fetch-depth: 0              # Avoid detached HEAD issues
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -13,7 +26,10 @@ on:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install yfinance
+        run: |
+          python -V
+          pip install --upgrade pip
+          pip install yfinance
 
       - name: Run alert script
         env:
@@ -22,21 +38,28 @@ on:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           TO_EMAIL:  ${{ secrets.TO_EMAIL }}
-        run: python nasdaq_alert.py
+        run: |
+          set -e
+          echo "[INFO] Running nasdaq_alert.py..."
+          mkdir -p docs
+          python nasdaq_alert.py
+          echo "[INFO] Script completed."
 
-      # If your repo is set to serve Pages from /docs on the default branch,
-      # you don't need to publish anything extra — the updated docs/ will be in the workflow's workspace but not committed.
-      # If you want the file to persist to the branch, add a commit step:
-      - name: Commit updated dashboard
+      - name: Show docs folder content
+        run: |
+          echo "[INFO] docs content after run:"
+          ls -la docs || true
+
+      - name: Commit updated dashboard to /docs
         run: |
           if [ -n "$(git status --porcelain docs/)" ]; then
+            echo "[INFO] Changes detected in docs/, committing..."
             git config user.name  "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add docs/
             git commit -m "Update dashboard [skip ci]"
             git push
+            echo "[INFO] Commit and push completed."
+          else
+            echo "[INFO] No changes to commit in docs/."
           fi
-    - cron: "15 21 * * 1-5"   # 21:15 UTC on weekdays (≈ 4:15pm ET after US close)
-  workflow_dispatch: {}        # allow manual runs
-
-jobs:
