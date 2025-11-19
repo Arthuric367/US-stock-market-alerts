@@ -20,7 +20,7 @@ WATCHLIST = [
     {"symbol": "TSLA",  "name": "Tesla, Inc. (TSLA)",         "thresholds": [0.85, 0.80, 0.75, 0.70]},
     {"symbol": "ONDS",  "name": "Ondas Holdings Inc (ONDS)",         "thresholds": [0.70, 0.50]},
     {"symbol": "GOOG",  "name": "Alphabet Inc Class C (GOOG)",         "thresholds": [0.85, 0.80, 0.75, 0.70]},
-    {"symbol": "PLTR",  "name": Palantir Technologies Inc (PLTR)",         "thresholds": [0.85, 0.80, 0.75, 0.70]},
+    {"symbol": "PLTR",  "name": "Palantir Technologies Inc (PLTR)",         "thresholds": [0.85, 0.80, 0.75, 0.70]},
 ]
 # ==============================================================================
 
