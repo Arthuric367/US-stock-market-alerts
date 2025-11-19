@@ -1,29 +1,37 @@
-import os, json, smtplib
+import os
+import json
+import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime, timezone
-import yfinance as yf
+ yfinance as yf
 
 TICKER = "^IXIC"
 THRESHOLDS = [0.85, 0.80, 0.75, 0.70]  # -15%, -20%, -25%, -30%
 STATE_FILE = "state.json"
 OUT_HTML = "docs/index.html"
 
+
 def send_email(subject, body):
+    """Send an email via SMTP using secrets provided by the workflow."""
     host = os.environ["SMTP_HOST"]
     port = int(os.environ.get("SMTP_PORT", "587"))
     user = os.environ["SMTP_USER"]
-    pwd  = os.environ["SMTP_PASS"]
-    to   = os.environ["TO_EMAIL"]
+    pwd = os.environ["SMTP_PASS"]
+    to = os.environ["TO_EMAIL"]
 
+    print(f"[EMAIL] Host={host} Port={port} User={user} To={to}")
     msg = MIMEText(body, "plain", "utf-8")
     msg["Subject"] = subject
     msg["From"] = user
     msg["To"] = to
 
-    with smtplib.SMTP(host, port) as s:
+    with smtplib.SMTP(host, port, timeout=30) as s:
+        s.set_debuglevel(1)  # show SMTP conversation in logs
         s.starttls()
         s.login(user, pwd)
         s.sendmail(user, [to], msg.as_string())
+    print("[EMAIL] Sent OK")
+
 
 def load_state():
     if os.path.exists(STATE_FILE):
@@ -31,9 +39,11 @@ def load_state():
             return json.load(f)
     return {}
 
+
 def save_state(st):
     with open(STATE_FILE, "w") as f:
         json.dump(st, f)
+
 
 # ------------------------------------------------------------------------------------
 # Helper: Compose a full daily-status email (for test/daily heartbeat messages)
@@ -46,7 +56,7 @@ def compose_status_email(last_close, ath_close, dd, thresholds, alerts):
     """
     lines = []
     for f in thresholds:
-        name  = f"{int((1-f)*100)}%"
+        name = f"{int((1 - f) * 100)}%"  # "15%", "20%", ...
         level = ath_close * f
         status = "TRIGGERED" if last_close <= level else "not triggered"
         lines.append(f"• -{name}: {level:,.2f} — {status}")
@@ -65,30 +75,32 @@ def compose_status_email(last_close, ath_close, dd, thresholds, alerts):
         f"Timestamp (UTC): {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}\n\n"
         f"Last close: {last_close:,.2f}\n"
         f"ATH (close): {ath_close:,.2f}\n"
-        f"Drawdown: {dd*100:.2f}%\n\n"
+        f"Drawdown: {dd * 100:.2f}%\n\n"
         f"Thresholds from ATH:\n" + "\n".join(lines) + "\n" + crossed
         + "\n\n(You are receiving this because the test-daily email block is enabled.)"
     )
     return subject, body
 
+
 def main():
+    # Download 15 years of daily closes
     df = yf.download(TICKER, period="15y", interval="1d", auto_adjust=False, progress=False)
     if df.empty:
-        print("No data downloaded")
+        print("[ERROR] No data downloaded from yfinance.")
         return
 
     last_close = float(df["Close"].iloc[-1])
-    ath_close  = float(df["Close"].max())
+    ath_close = float(df["Close"].max())
     dd = last_close / ath_close - 1.0
 
-    # Alert state
+    # Alert state bookkeeping
     st = load_state()
     alerts = []
     for f in THRESHOLDS:
-        name = f"{int((1-f)*100)}%"   # e.g. "15%"
+        name = f"{int((1 - f) * 100)}%"   # e.g., "15%"
         level = ath_close * f
         hit = last_close <= level
-        prev = st.get(name, "armed")
+        prev = st.get(name, "armed")      # default to "armed" (not yet sent)
 
         if hit and prev != "sent":
             alerts.append((name, level))
@@ -101,7 +113,7 @@ def main():
     # Minimal HTML dashboard
     lines = []
     for f in THRESHOLDS:
-        name  = f"{int((1-f)*100)}%"
+        name = f"{int((1 - f) * 100)}%"
         level = ath_close * f
         status = "TRIGGERED" if last_close <= level else "not triggered"
         color = "#c33" if status == "TRIGGERED" else "#2a7"
@@ -109,12 +121,15 @@ def main():
 
     html = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Nasdaq Drawdown</title>
-<style>body{{font-family:system-ui,Segoe UI,Arial,sans-serif;max-width:800px;margin:40px auto}}</style>
+<style>
+body {{ font-family: system-ui, Segoe UI, Arial, sans-serif; max-width: 800px; margin: 40px auto }}
+ul {{ line-height: 1.7 }}
+</style>
 </head><body>
 <h1>Nasdaq Composite (IXIC) – Drawdown Dashboard</h1>
 <p>Last close: <b>{last_close:,.2f}</b><br>
 ATH close: <b>{ath_close:,.2f}</b><br>
-Drawdown: <b>{dd*100:.2f}%</b><br>
+Drawdown: <b>{dd * 100:.2f}%</b><br>
 Updated: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}</p>
 <h3>Thresholds</h3>
 <ul>
@@ -130,8 +145,12 @@ Updated: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}</p>
     # Threshold-crossing alerts (original behavior)
     if alerts:
         msg = "\n".join([f"• -{n} at {level:,.2f} (last close {last_close:,.2f})" for (n, level) in alerts])
-        subject = f"IXIC alert: {' & '.join(['-'+n for (n,_) in alerts])} crossed"
-        body = f"Nasdaq Composite (IXIC)\nLast: {last_close:,.2f}\nATH (close): {ath_close:,.2f}\nDrawdown: {dd*100:.2f}%\n\n{msg}"
+        subject = f"IXIC alert: {' & '.join(['-' + n for (n, _) in alerts])} crossed"
+        body = (
+            f"Nasdaq Composite (IXIC)\n"
+            f"Last: {last_close:,.2f}\nATH (close): {ath_close:,.2f}\n"
+            f"Drawdown: {dd * 100:.2f}%\n\n{msg}"
+        )
         send_email(subject, body)
 
     # ================================================================================
@@ -149,4 +168,7 @@ Updated: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}</p>
     # === END TEST DAILY EMAIL BLOCK ================================================
     # ================================================================================
 
+
+# Ensure main() is called — this line must be indented under the if-statement
 if __name__ == "__main__":
+    main()
