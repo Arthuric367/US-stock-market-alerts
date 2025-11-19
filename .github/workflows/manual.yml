@@ -1,0 +1,48 @@
+# .github/workflows/daily.yml
+name: nasdaq-alert
+
+on:
+  schedule:
+    - cron: "15 21 * * 1-5"   # 21:15 UTC ≈ 4:15pm US Eastern, after market close
+  workflow_dispatch: {}        # allow manual run
+
+permissions:
+  contents: write  # needed to commit docs/ back to the repo
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install yfinance
+
+      - name: Run alert script
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          TO_EMAIL:  ${{ secrets.TO_EMAIL }}
+        run: python nasdaq_alert.py
+
+      - name: Commit updated dashboard to /docs
+        run: |
+          # Ensure docs/ exists (nasdaq_alert.py should have created it, but we guard anyway)
+          mkdir -p docs
+          # Only commit if there are changes
+          if [ -n "$(git status --porcelain docs/)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add docs/
+            git commit -m "Update dashboard [skip ci]"
+            git push
+          else
+            echo "No changes in docs/ to commit."
+          fi
